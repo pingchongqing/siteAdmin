@@ -1,19 +1,19 @@
 <template lang="html">
 <div class="app-container">
-	<div class="itemscont">
+	<div class="itemscont" style="padding:0 10px;">
     <el-form :model="planform" ref="ruleForm" label-width="80px" class="ownproductlist">
-      <el-row :gutter="6">
+      <el-row :gutter="5">
         <el-col :span="5">
-          <el-form-item label="询价企业:">
-            <el-input v-model="planform.enquiryEnt" placeholder="请输入询价企业"></el-input>
+          <el-form-item label="文章标题:">
+            <el-input v-model="planform.title" placeholder="文章标题"></el-input>
           </el-form-item>
         </el-col>
         <el-col :span="5">
-          <el-form-item label="报价企业:">
-            <el-input v-model="planform.quotationEnt" placeholder="请输入报价企业"></el-input>
+          <el-form-item label="作者:">
+            <el-input v-model="planform.authorName" placeholder="请输入作者"></el-input>
           </el-form-item>
         </el-col>
-        <!-- <el-col :span="5">
+        <el-col :span="5">
           <el-form-item label="创建日期:">
             <el-date-picker
               v-model="searchDate"
@@ -25,23 +25,6 @@
               align="right">
             </el-date-picker>
           </el-form-item>
-        </el-col> -->
-        <el-col :span="5">
-          <el-form-item label="状态:">
-            <el-select
-              style="width:100%;"
-              v-model="planform.status"
-              filterable
-              placeholder="请选择"
-              >
-              <el-option
-                v-for="item in statuslist"
-                :key="item.id"
-                :label="item.value"
-                :value="item.id">
-              </el-option>
-            </el-select>
-          </el-form-item>
         </el-col>
         <el-col :span="4">
           <el-form-item label-width="0">
@@ -51,6 +34,7 @@
         </el-col>
       </el-row>
     </el-form>
+    <el-button size="mini" type="primary" @click="tonew">新增</el-button>
     <el-table
       :data="list"
       style="width:100%;margin-top:10px;"
@@ -59,49 +43,52 @@
       border>
        <el-table-column
         fixed="left"
-        width="160px"
-        label="询盘单号">
+        label="文章标题">
         <template slot-scope="scope">
-          <span>{{ scope.row.orderNo }}</span>
+          <span>{{ scope.row.title }}</span>
         </template>
       </el-table-column>
       <el-table-column
-        label="报价单号">
+        width="100"
+        label="作者">
         <template slot-scope="scope">
-          <span>{{ scope.row.customerName }}</span>
+          <span>{{ scope.row.authorName }}</span>
         </template>
       </el-table-column>
       <el-table-column
-        label="询价企业">
-        <template slot-scope="scope">
-          <span>{{ scope.row.enquiryEnt }}</span>
-        </template>
+        label="创建时间">
+        <div slot-scope="scope">
+          <span v-if="scope.row.createDate">{{ parseTime(scope.row.createDate,'{y}-{m}-{d} {h}:{i}:{s}')}}</span>
+        </div>
       </el-table-column>
       <el-table-column
-        label="报价企业">
-        <template slot-scope="scope">
-          <span>{{ scope.row.quotationEnt }}</span>
-        </template>
+        label="是否显示">
+        <div slot-scope="scope">
+          <el-switch
+            v-model="scope.row.isShow"
+            active-color="#13ce66"
+            :active-value="0"
+            :inactive-value="1"
+            @change="changedata(scope.row.id,scope.row.isShow)"
+            >
+          </el-switch>
+        </div>
       </el-table-column>
       <el-table-column
-        label="报价日期">
-        <template slot-scope="scope">
-          <span v-if="scope.row.gmtCreate">{{ parseTime(scope.row.gmtCreate,'{y}-{m}-{d} {h}:{i}:{s}')}}</span>
-        </template>
-      </el-table-column>
-      <el-table-column
-        label="状态">
-        <template slot-scope="scope">
-          <span>{{ scope.row.status | quationStatusFilter }}</span>
-        </template>
+        label="文章权重">
+        <div slot-scope="scope">
+          <span>{{scope.row.weight}}</span>
+        </div>
       </el-table-column>
       <el-table-column
         fixed="right"
         width="180"
         label="操作">
-        <template slot-scope="scope" >
-          <span @click="todetail(scope.row.orderNo)" style="color:#409EFF;cursor:pointer;margin-right:5px;">查看</span>
-        </template>
+        <div slot-scope="scope" >
+          <span @click="todetail(scope.row.id)" style="color:#409EFF;cursor:pointer;margin-right:5px;">查看</span>
+          <span @click="modifyNews(scope.row.id)" style="color:#409EFF;cursor:pointer;margin-right:5px;">编辑</span>
+          <span style="color:red;cursor:pointer;margin-right:5px;" @click="deleteitem(scope.row.id)">删除</span>
+        </div>
       </el-table-column>
     </el-table>
     <el-pagination
@@ -118,23 +105,23 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { quotationInfoList } from '@/api/enquiryQuotationInfo'
+import { newsInfo, deleteNewsInfo, changeNewsState } from '@/api/newsinfo'
 import { parseTime } from '@/utils'
 export default {
-  name: 'quotationList',
+  name: 'newslist',
   data() {
     return {
       planform: {
-        enquiryEnt:null,
-        status:null,
-        quotationEnt:null
+         title:null,//用户名
+         authorName:null,
+         createStartDate:null,
+         createEndDate:null
       },
       list:[],
       current:1,
       pageSize: 10,
       total:0,
       dialogbtn:false,
-      statuslist:[{id:0,value:'待确认'},{id:1,value:'已接受'},{id:2,value:'未接受'},{id:3,value:'已关闭'}],
       searchDate:[],
       pickerOptions: {
         shortcuts: [{
@@ -171,7 +158,11 @@ export default {
   methods: {
     parseTime,
     getlist() {
-      quotationInfoList({pageNum:this.current,pageSize:this.pageSize,...this.planform}).then(
+      if(this.searchDate.length>0){
+        this.planform.createStartDate=this.searchDate[0]
+        this.planform.createEndDate=this.searchDate[1]
+      }
+      newsInfo({pageNum:this.current,pageSize:this.pageSize,...this.planform}).then(
         res => {
           this.total=res.data.data.total
           this.list=res.data.data.list
@@ -181,9 +172,11 @@ export default {
       })
     },
     onCancel() {
-      for(let i  in this.planform){
-        this.planform[i]=null
-      }
+      this.planform.title=null
+      this.planform.authorName=null
+      this.planform.createStartDate=null
+      this.planform.createEndDate=null
+      this.searchDate=[]
       this.current=1
       this.pageSize=10
       this.getlist()
@@ -197,12 +190,63 @@ export default {
       this.current = val
       this.getlist()
     },
-    todetail(orderNo){
-      this.$router.push({
-        name: 'quotationdetail',
-        params:{
-          orderNo
+    changedata(id,isShow){
+      changeNewsState({id:id,isShow:isShow}).then(res=>{
+        if(res.data.code=='success'){
+          this.$message.success({message: '操作成功'})
+          this.getlist()
+        }else{
+          this.$message.error({message: res.data.message})
         }
+      }).catch(err=>{
+        console.log(err)
+      })
+    },
+    todetail(id){
+      this.$router.push({
+        name: 'newsdetail',
+        params:{
+          id
+        }
+      })
+    },
+    modifyNews(id){
+      this.$router.push({
+        name: 'modifyNews',
+        params:{
+          id
+        }
+      })
+    },
+    tonew(){
+      this.$router.push({
+        name: 'newNews'
+      })
+    },
+    deleteitem(id){
+      let submitId=id
+      this.$confirm('确认删除？', '提示', {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(_=>{
+        deleteNewsInfo(submitId).then(res=>{
+          if(res.data.code=='success'){
+            this.$message.success({message: '删除成功'})
+            this.onSubmit()
+          }else{
+            this.$message({
+              message: res.data.message,
+              type: 'error'
+            })
+          }
+        }).catch(err=>{
+          this.$message({
+            message:'失败',
+            type: 'error'
+          })
+        })
+      }).catch(_=>{
       })
     }
   },
@@ -233,7 +277,7 @@ h3 {
 .showform-enter, .showform-leave-to {
   opacity: 0;
 }
-.itemscont{background:#fff;padding:0 10px;border-radius:5px;}
+.itemscont{background:#fff;padding-bottom:15px;border-radius:5px;}
 .companybtn{
   color: #fff;
   background-color: #5868d9;

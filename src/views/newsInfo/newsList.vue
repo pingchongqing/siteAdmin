@@ -57,13 +57,13 @@
       </el-table-column>
       <el-table-column
         label="创建时间">
-        <template slot-scope="scope">
+        <div slot-scope="scope">
           <span v-if="scope.row.createDate">{{ parseTime(scope.row.createDate,'{y}-{m}-{d} {h}:{i}:{s}')}}</span>
-        </template>
+        </div>
       </el-table-column>
       <el-table-column
         label="是否显示">
-        <template slot-scope="scope">
+        <div slot-scope="scope">
           <el-switch
             v-model="scope.row.isShow"
             active-color="#13ce66"
@@ -72,23 +72,23 @@
             @change="changedata(scope.row.id,scope.row.isShow)"
             >
           </el-switch>
-        </template>
+        </div>
       </el-table-column>
       <el-table-column
         label="文章权重">
-        <template slot-scope="scope">
+        <div slot-scope="scope">
           <span>{{scope.row.weight}}</span>
-        </template>
+        </div>
       </el-table-column>
       <el-table-column
         fixed="right"
         width="180"
         label="操作">
-        <template slot-scope="scope" >
+        <div slot-scope="scope" >
           <span @click="todetail(scope.row.id)" style="color:#409EFF;cursor:pointer;margin-right:5px;">查看</span>
           <span @click="modifyNews(scope.row.id)" style="color:#409EFF;cursor:pointer;margin-right:5px;">编辑</span>
           <span style="color:red;cursor:pointer;margin-right:5px;" @click="deleteitem(scope.row.id)">删除</span>
-        </template>
+        </div>
       </el-table-column>
     </el-table>
     <el-pagination

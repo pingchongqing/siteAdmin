@@ -1,7 +1,5 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import etpRouter from './etpRouter'
-import scmRouter from './scmRouter'
 import { mapGetters } from 'vuex'
 const _import = require('./_import_' + process.env.NODE_ENV)
 // in development-env not use lazy-loading, because lazy-loading too many pages will cause webpack hot update too slow. so only in production use lazy-loading;
@@ -43,112 +41,23 @@ export const constantRouterMap = [
         component: _import('dashboard/index')
       },
     ]
-  },
-  {
-    path: '/productInfo',
-    component: Layout,
-    redirect: '/productInfo/shopproductlist',
-    name: 'productInfo',
-    alwaysShow: true,
-    meta: { title: '商品管理' }, 
-    children:[
-    {
-      path: 'shopproductlist',
-      component: _import('productInfo/shopproductlist'),
-      name: 'shopproductlist',
-      meta: { title: '商品列表',noCache: true }
-    },
-    {
-      path: 'shopproductdetail/:type/:stdProductNo/:lv3CategoryNo',
-      component: _import('productInfo/shopproductdetail'),
-      name: 'shopproductdetail',
-      hidden:true,
-      meta: { title: '商品详情',noCache: true }
-    }
-   ]
-  },
-  {
-      path: '/enquiryQuotationInfo',
-      component: Layout,
-      redirect: '/enquiryQuotationInfo/enquiryList',
-      name: 'enquiryQuotationInfo',
-      alwaysShow: true,
-      meta: { title: '询报价管理' }, 
-      children:[
-      {
-        path: 'enquiryList',
-        component: _import('enquiryQuotationInfo/enquiryList'),
-        name: 'enquiryList',
-        meta: { title: '询价单',noCache: true }
-      },
-      {
-        path: 'enquirydetail/:orderNo',
-        component: _import('enquiryQuotationInfo/enquirydetail'),
-        name: 'enquirydetail',
-        hidden:true,
-        meta: { title: '询价单详情',noCache: true }
-      },
-      {
-        path: 'quotationList',
-        component: _import('enquiryQuotationInfo/quotationList'),
-        name: 'quotationList',
-        meta: { title: '报价单',noCache: true }
-      },
-      {
-        path: 'quotationdetail/:orderNo',
-        component: _import('enquiryQuotationInfo/quotationdetail'),
-        name: 'quotationdetail',
-        hidden:true,
-        meta: { title: '报价单详情',noCache: true }
-      }
-     ]
-    },
+  }, 
    {
-      path: '/companyInfo',
+      path: '/user',
       component: Layout,
-      redirect: '/companyInfo/companyList',
-      name: 'companyInfo',
+      redirect: '/user/list',
+      name: 'user',
       alwaysShow: true,
-      meta: { title: '会员管理' }, 
+      meta: { title: '管理员' }, 
       children:[
       {
-        path: 'companyList',
-        component: _import('companyInfo/companyList'),
-        name: 'companyList',
-        meta: { title: '查询会员',noCache: true }
-      },
-      {
-        path: 'companydetail/:type/:entNo',
-        component: _import('companyInfo/companydetail'),
-        name: 'companydetail',
-        hidden:true,
-        meta: { title: '会员详情',noCache: true }
+        path: 'list',
+        component: _import('user/list'),
+        name: 'userList',
+        meta: { title: '管理员列表',noCache: true }
       }
      ]
     },  
-  {
-      path: '/orderInfo',
-      component: Layout,
-      redirect: '/orderInfo/orderList',
-      name: 'orderInfo',
-      alwaysShow: true,
-      meta: { title: '订单管理' }, 
-      children:[
-      {
-        path: 'orderList',
-        component: _import('orderInfo/orderList'),
-        name: 'orderList',
-        meta: { title: '订单列表',noCache: true }
-      },
-      {
-        path: 'orderdetail/:id',
-        component: _import('orderInfo/orderdetail'),
-        name: 'orderdetail',
-        hidden:true,
-        meta: { title: '订单详情',noCache: true }
-      }
-     ]
-    },
   {
     path: '/newsInfo',
     component: Layout,

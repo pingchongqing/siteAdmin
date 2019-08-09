@@ -28,29 +28,7 @@ const app = {
   actions: {
     ToggleSideBar: ({ commit }) => {
       commit('TOGGLE_SIDEBAR')
-    },
-    // GetStoreList: ({ commit }) => {
-    //   return new Promise((resolve, reject) => {
-    //     StroeList().then(response => {
-    //       const data = response.data
-    //       commit('SET_STORELIST', data)
-    //       resolve()
-    //     }).catch(error => {
-    //       reject(error)
-    //     })
-    //   })
-    // },
-    // GetGysList: ({ commit }) => {
-    //   return new Promise((resolve, reject) => {
-    //     getGys().then(response => {
-    //       const data = response.data
-    //       commit('SET_GYSLIST', data)
-    //       resolve()
-    //     }).catch(error => {
-    //       reject(error)
-    //     })
-    //   })
-    // }
+    }
   }
 }
 
