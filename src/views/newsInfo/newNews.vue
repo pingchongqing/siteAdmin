@@ -13,9 +13,9 @@
               >
               <el-option
                 v-for="item in categorylist"
-                :key="item.categoryId"
-                :label="item.categoryName"
-                :value="item.categoryId">
+                :key="item._id"
+                :label="item.className"
+                :value="item._id">
               </el-option>
             </el-select>
           </el-form-item>
@@ -49,7 +49,7 @@
         <el-col>
           <el-form-item label="缩略图" v-loading="imageloading" style="position:relative;" prop="picPath">
             <template v-if="planform.picPath">
-              <img :src="planform.picPath" style="width:104px;height:105px;" @click="showBigImg(planform.picPath)"/>
+              <img :src="planform.picPath" style="height:105px;" @click="showBigImg(planform.picPath)"/>
               <el-button
                 size="mini"
                 type="primary"
@@ -80,26 +80,11 @@
         </el-col>
       </el-row> 
       <el-form-item label="内容编辑" prop="text">
-        <el-upload
-          class="musicupload"
-          ref="pictureupload"
-          :action="pictureuploadUrl"
-          multiple
-          :limit="1"
-          :file-list="musicList"
-          :before-upload="beforeMusicUpload"
-          name="file"
-          :on-success="handleMusicUploadSuccess"
-          :accept="'.mp4'"
-          >
-            <i>插入视频</i>
-        </el-upload>
         <div id="editorElem" style="text-align:left;width:700px;margin-top:10px;"></div>
         <el-input v-model="planform.text" v-show="false"></el-input>
       </el-form-item>
       <el-form-item style="margin-top:10px;">
-        <el-button type="primary" @click="onSubmit('leave')" :disabled="submitButton">保存并关闭</el-button>
-        <el-button type="primary" @click="onSubmit('continue')">保存并继续添加</el-button>
+        <el-button type="primary" @click="onSubmit()" :disabled="submitButton">确定提交</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -112,9 +97,7 @@
 
 <script>
 import E from 'wangeditor'
-// import { newsCreate } from '@/api/valueAddedInfo'
-// import { companylist } from '@/api/baseinfo'
-import { newsCategoryInfo, createNews } from '@/api/newsinfo'
+import { newsCategoryInfo, createNews, newsInfodetail } from '@/api/newsinfo'
 export default {
   name: 'newNews',
   data() {
@@ -177,14 +160,24 @@ export default {
   },
   created() {
     this.getcategorylist()
+    if (this.$route.query._id) {
+      this.getDetail()
+    }
   },
   computed:{
   },
   methods: {
+    getDetail(){
+      newsInfodetail({_id: this.$route.query._id}).then(res=>{
+        const result = res.data.data
+        this.planform = result
+        this.editor.txt.html(result.text)
+      })
+    },
     getcategorylist(){
-      newsCategoryInfo({pageNum:1,pageSize:10000000}).then(
+      newsCategoryInfo().then(
         res => {
-          this.categorylist=res.data.data.items
+          this.categorylist=res.data.data
         }
       ).catch(err => {
         console.log(err)
@@ -278,8 +271,7 @@ export default {
       }
       this.$refs['pictureupload'].clearFiles()
     },
-    onSubmit(type) {
-      let submitType=type
+    onSubmit() {
       if(this.editor.txt.html() && this.editor.txt.html()!='<p><br></p>'){
         this.planform.text=this.editor.txt.html()
       }else{
@@ -291,37 +283,16 @@ export default {
           this.submitButton=true
           this.loading=true
           createNews(this.planform).then(res=>{
-            if(res.data.code=='success'){
-              this.$message({
-                message: '新建成功',
-                type: 'success'
-              })
-              if(submitType==='leave'){
-                this.$store.dispatch('delVisitedViews', view[0]).then(() => {
-                  this.$router.push({
-                    name: 'newsList'
-                  })
-                })
-              }else if(submitType=='continue'){
-                this.$refs['ruleForm'].resetFields()
-                this.editor.txt.clear()
-                this.planform.text=null
-                this.submitButton=false
-                this.loading=false
-              }
-            }else{
-              this.$message({
-                message: res.data.message,
-                type: 'error'
-              })
-              this.submitButton=false
-              this.loading=false
-            }
-          }).catch(err=>{
             this.$message({
-              message: '提交失败',
-              type: 'error'
+              message: '操作成功',
+              type: 'success'
             })
+            this.$store.dispatch('delVisitedViews', view[0]).then(() => {
+              this.$router.push({
+                name: 'newsList'
+              })
+            })
+          }).catch(err=>{
             this.submitButton=false
             this.loading=false
           })
@@ -342,14 +313,13 @@ export default {
     this.editor = new E('#editorElem') //实例化
     this.editor.customConfig = {
       showLinkImg:false,
-// 　　　　　　onchange : (html) =>{this.planform.text = html;} ,
 　　　　　　uploadImgMaxSize : 5 * 1024 * 1024 , 
 　　　　　　uploadImgMaxLength : 1 , // 限制一次最多上传 1 张图片
 　　　　　　uploadFileName : 'file' , //设置上传图片文件的时候，后台接受的文件名，files.myFileName;
 　　　　　　withCredentials : true , //跨域上传中如果需要传递 cookie 需设置 withCredentials
 　　　　　　uploadImgTimeout : 3000 , //自定义 timeout 时间，这里是设置的3秒
 　　　　　　uploadImgServer : '/api/file/uploadFile' , //上传到后台的接口
-            zIndex:1
+          zIndex:1
 　　　}
     this.toListenUp(this.editor);//监听上传的各个阶段
     this.editor.create();

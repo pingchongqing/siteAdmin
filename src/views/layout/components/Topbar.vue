@@ -4,11 +4,11 @@
       <img :src="logoPath" />
     </div>
     <div class="plant-text">
-      运营中心
+      管理后台
     </div>
-<!--     <el-dropdown class="avatar-container" trigger="click">
+    <el-dropdown class="avatar-container" trigger="click">
       <div class="avatar-wrapper">
-        <span class="welcome">欢迎</span>
+        <span class="welcome">欢迎{{userInfo.username || getName()}}</span>
         <i class="el-icon-caret-bottom"></i>
       </div>
       <el-dropdown-menu class="user-dropdown" slot="dropdown">
@@ -21,11 +21,11 @@
           <span @click="modifyPasswordShow = true" style="display:block;">修改密码</span>
         </el-dropdown-item>
         <el-dropdown-item divided>
-          <span @click="logout" style="display:block;">退出登录</span>
+          <span @click="quit" style="display:block;">退出登录</span>
         </el-dropdown-item>
       </el-dropdown-menu>
-    </el-dropdown> -->
-    <!-- <el-dialog
+    </el-dropdown>
+    <el-dialog
       title="修改密码"
       :visible.sync="modifyPasswordShow"
       append-to-body
@@ -46,22 +46,21 @@
         <el-button @click="modifyPasswordShow = false">取 消</el-button>
         <el-button type="primary" @click="modifyPassword">确 定</el-button>
       </div>
-    </el-dialog> -->
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import logoPath from '@/assets/image/logo.png'
 import { mapGetters } from 'vuex'
-// import { updatepassword } from '@/api/login'
+import { updatepassword, authlogout } from '@/api/login'
+import { getName } from '@/utils/auth'
 export default {
   data() {
     var validatePass = (rule, value, callback) => {
       if (value === '') {
         callback(new Error('请输入密码'))
-      } else if (value.length < 6) {
-        callback(new Error('密码长度不小于6位'))
-      } else {
+      }else {
         if (this.form.newpassword !== '') {
           this.$refs.ruleForm2.validateField('renewpassword')
         }
@@ -71,9 +70,7 @@ export default {
     var validatePass2 = (rule, value, callback) => {
       if (value === '') {
         callback(new Error('请再次输入密码'))
-      } else if (value.length < 6) {
-        callback(new Error('密码长度不小于6位'))
-      } else if (value !== this.form.newpassword) {
+      }else if (value !== this.form.newpassword) {
         callback(new Error('两次输入密码不一致!'))
       } else {
         callback()
@@ -81,7 +78,6 @@ export default {
     }
     return {
       logoPath,
-      // TiggerUrl,
       modifyPasswordShow: false,
       form: {
         oldpassword: '',
@@ -102,46 +98,46 @@ export default {
     }
   },
   computed: {
-    // ...mapGetters([
-    //   'sidebar',
-    //   'avatar',
-    //   'company',
-    //   'markArr',
-    //   'userInfo',
-    //   'mark'
-    // ])
+    ...mapGetters(['userInfo'])
   },
 
   mounted() {
   },
 
   methods: {
+    getName,
      modifyPassword() {
       this.$refs.ruleForm2.validate((valid) => {
         if (valid) {
+          const loading = this.$loading({
+            lock: true,
+            text: '请稍后...',
+            spinner: 'el-icon-loading',
+            background: 'rgba(0, 0, 0, 0.7)'
+          })
           updatepassword({
-            userId: this.userInfo.id,
-            oldPw: this.form.oldpassword,
-            newPw: this.form.newpassword
+            oldpassword: this.form.oldpassword,
+            newpassword: this.form.newpassword
           }).then(
             res => {
-              if(JSON.parse(res.data).code=='success'){
-                 this.$message.success('修改密码成功')
-                 this.modifyPasswordShow = false
-              }
-            }
-          )
+              this.$message.success('修改密码成功')
+              this.modifyPasswordShow = false
+              loading.close()
+            }            
+          ).catch(err => {
+            loading.close()
+          })
         }
       })
     },
 
-    logout() {
+    quit() {
       this.$confirm('确定退出吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消'
       }).then(action => {
         if (action === 'confirm') {
-          location.href = `/csj_logout`
+          authlogout()
         }
       })
     }

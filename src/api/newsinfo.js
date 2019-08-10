@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 资讯分类列表
 export function newsCategoryInfo(data) {
   return request({
-    url: '/api/informationType/queryListPage',
+    url: '/api/artcls/list',
     method: 'get',
     params: data
   })
@@ -12,7 +12,7 @@ export function newsCategoryInfo(data) {
 // 资讯分类新增
 export function createCategoryName(data) {
   return request({
-    url: '/api/informationType/createInformationType',
+    url: '/api/artcls/create',
     method: 'post',
     data: data
   })
@@ -21,7 +21,7 @@ export function createCategoryName(data) {
 // 资讯分类修改
 export function modifyCategoryName(data) {
   return request({
-    url: '/api/informationType/updateInformationType',
+    url: '/api/artcls/modify',
     method: 'post',
     data: data
   })
@@ -30,24 +30,25 @@ export function modifyCategoryName(data) {
 //删除资讯分类
 export function deleteCategoryName(data) {
   return request({
-    url: '/api/informationType/delete/'+data,
+    url: '/api/artcls/del',
     method: 'delete',
+    data
   })
 }
 
 //资讯列表
 export function newsInfo(data) {
   return request({
-    url: '/api/information/getInformation',
+    url: '/api/article/search',
     method: 'post',
-    data:data
+    data
   })
 }
 
 //资讯新增
 export function createNews(data) {
   return request({
-    url: '/api/information/createInformation',
+    url: '/api/article/create',
     method: 'post',
     data:data
   })
@@ -65,16 +66,18 @@ export function modifyNewsInfo(data) {
 //资讯删除
 export function deleteNewsInfo(data) {
   return request({
-    url: '/api/information/deleteInformationById/'+data,
-    method: 'delete'
+    url: '/api/article/del',
+    method: 'delete',
+    data
   })
 }
 
 //获取资讯详情
 export function newsInfodetail(data) {
   return request({
-    url: '/api/information/informationDetail/'+data,
-    method: 'get'
+    url: '/api/article/detail',
+    method: 'get',
+    params: data
   })
 }
 

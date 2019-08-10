@@ -1,39 +1,6 @@
 <template lang="html">
 <div class="app-container">
 	<div class="itemscont" style="padding:0 10px;">
-    <el-form :model="planform" ref="ruleForm" label-width="80px" class="ownproductlist">
-      <el-row :gutter="5">
-        <el-col :span="5">
-          <el-form-item label="文章标题:">
-            <el-input v-model="planform.title" placeholder="文章标题"></el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="5">
-          <el-form-item label="作者:">
-            <el-input v-model="planform.authorName" placeholder="请输入作者"></el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="5">
-          <el-form-item label="创建日期:">
-            <el-date-picker
-              v-model="searchDate"
-              type="datetimerange"
-              :picker-options="pickerOptions"
-              range-separator="-"
-              start-placeholder="开始"
-              end-placeholder="结束"
-              align="right">
-            </el-date-picker>
-          </el-form-item>
-        </el-col>
-        <el-col :span="4">
-          <el-form-item label-width="0">
-            <el-button type="primary" @click="onSubmit" size="mini">查询</el-button>
-            <el-button @click="onCancel" size="mini">重置</el-button>
-          </el-form-item>
-        </el-col>
-      </el-row>
-    </el-form>
     <el-button size="mini" type="primary" @click="tonew">新增</el-button>
     <el-table
       :data="list"
@@ -43,113 +10,35 @@
       border>
        <el-table-column
         fixed="left"
-        label="文章标题">
+        label="用户名">
         <template slot-scope="scope">
-          <span>{{ scope.row.title }}</span>
+          <span>{{ scope.row.username }}</span>
         </template>
-      </el-table-column>
-      <el-table-column
-        width="100"
-        label="作者">
-        <template slot-scope="scope">
-          <span>{{ scope.row.authorName }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column
-        label="创建时间">
-        <div slot-scope="scope">
-          <span v-if="scope.row.createDate">{{ parseTime(scope.row.createDate,'{y}-{m}-{d} {h}:{i}:{s}')}}</span>
-        </div>
-      </el-table-column>
-      <el-table-column
-        label="是否显示">
-        <div slot-scope="scope">
-          <el-switch
-            v-model="scope.row.isShow"
-            active-color="#13ce66"
-            :active-value="0"
-            :inactive-value="1"
-            @change="changedata(scope.row.id,scope.row.isShow)"
-            >
-          </el-switch>
-        </div>
-      </el-table-column>
-      <el-table-column
-        label="文章权重">
-        <div slot-scope="scope">
-          <span>{{scope.row.weight}}</span>
-        </div>
       </el-table-column>
       <el-table-column
         fixed="right"
         width="180"
         label="操作">
         <div slot-scope="scope" >
-          <span @click="todetail(scope.row.id)" style="color:#409EFF;cursor:pointer;margin-right:5px;">查看</span>
-          <span @click="modifyNews(scope.row.id)" style="color:#409EFF;cursor:pointer;margin-right:5px;">编辑</span>
-          <span style="color:red;cursor:pointer;margin-right:5px;" @click="deleteitem(scope.row.id)">删除</span>
+          <span @click="resetPassword(scope.row._id)" style="color:#409EFF;cursor:pointer;margin-right:5px;">重置密码</span>
+          <span style="color:red;cursor:pointer;margin-right:5px;" @click="deleteAdmin(scope.row._id)">删除</span>
         </div>
       </el-table-column>
     </el-table>
-    <el-pagination
-      @current-change="handleCurrentPageChange"
-      :current-page="current"
-      :page-sizes="[10]"
-      :page-size="pageSize"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="total">
-    </el-pagination>
   </div>
 </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-import { newsInfo, deleteNewsInfo, changeNewsState } from '@/api/newsinfo'
+import { authlist, adduser, deleteuser, resetpassword } from '@/api/login'
 import { parseTime } from '@/utils'
 export default {
   name: 'newslist',
   data() {
     return {
-      planform: {
-         title:null,//用户名
-         authorName:null,
-         createStartDate:null,
-         createEndDate:null
-      },
       list:[],
-      current:1,
-      pageSize: 10,
-      total:0,
-      dialogbtn:false,
-      searchDate:[],
-      pickerOptions: {
-        shortcuts: [{
-          text: '最近一周',
-          onClick(picker) {
-            const end = new Date();
-            const start = new Date();
-            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
-            picker.$emit('pick', [start, end]);
-          }
-        }, {
-          text: '最近一个月',
-          onClick(picker) {
-            const end = new Date();
-            const start = new Date();
-            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
-            picker.$emit('pick', [start, end]);
-          }
-        }, {
-          text: '最近三个月',
-          onClick(picker) {
-            const end = new Date();
-            const start = new Date();
-            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
-            picker.$emit('pick', [start, end]);
-          }
-        }]
-      },
+      loading: false
     }
   },
   created() {
@@ -158,95 +47,98 @@ export default {
   methods: {
     parseTime,
     getlist() {
-      if(this.searchDate.length>0){
-        this.planform.createStartDate=this.searchDate[0]
-        this.planform.createEndDate=this.searchDate[1]
-      }
-      newsInfo({pageNum:this.current,pageSize:this.pageSize,...this.planform}).then(
+      this.loading = true
+      authlist().then(
         res => {
-          this.total=res.data.data.total
-          this.list=res.data.data.list
+          console.log(res)
+          this.list = res.data.data
         }
       ).catch(err => {
         console.log(err)
       })
     },
-    onCancel() {
-      this.planform.title=null
-      this.planform.authorName=null
-      this.planform.createStartDate=null
-      this.planform.createEndDate=null
-      this.searchDate=[]
-      this.current=1
-      this.pageSize=10
-      this.getlist()
-    },
-    onSubmit() {
-      this.current=1
-      this.pageSize=10
-      this.getlist()
-    },
-    handleCurrentPageChange(val) {
-      this.current = val
-      this.getlist()
-    },
-    changedata(id,isShow){
-      changeNewsState({id:id,isShow:isShow}).then(res=>{
-        if(res.data.code=='success'){
-          this.$message.success({message: '操作成功'})
+    resetPassword(id){
+      this.$confirm('确认重置密码？', '提示', {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(_=>{
+        const loading = this.$loading({
+          lock: true,
+          text: '请稍后...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        })
+        resetpassword({_id: id}).then(res => {
+          loading.close()
+          this.$message({
+            type: 'success',
+            message: '重置成功'
+          })
           this.getlist()
-        }else{
-          this.$message.error({message: res.data.message})
-        }
-      }).catch(err=>{
-        console.log(err)
-      })
-    },
-    todetail(id){
-      this.$router.push({
-        name: 'newsdetail',
-        params:{
-          id
-        }
-      })
-    },
-    modifyNews(id){
-      this.$router.push({
-        name: 'modifyNews',
-        params:{
-          id
-        }
+        }).catch(err => {
+          console.log(err)
+          loading.close()
+        })
       })
     },
     tonew(){
-      this.$router.push({
-        name: 'newNews'
+      this.$prompt('请输入账号', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }).then(({ value }) => {
+        const loading = this.$loading({
+          lock: true,
+          text: '请稍后...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        })
+        adduser({ username: value }).then(res => {
+          const result = res.data
+          console.log(res)
+          if (result.code === 'success') {
+            this.$message({
+              type: 'success',
+              message: value + '创建成功'
+            })
+            this.getlist()
+          }
+          loading.close()
+        }).catch(() => {
+          loading.close()
+        })
+
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '取消输入'
+        })
       })
     },
-    deleteitem(id){
+    deleteAdmin(id){
       let submitId=id
       this.$confirm('确认删除？', '提示', {
         confirmButtonText: '确认',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(_=>{
-        deleteNewsInfo(submitId).then(res=>{
-          if(res.data.code=='success'){
-            this.$message.success({message: '删除成功'})
-            this.onSubmit()
-          }else{
-            this.$message({
-              message: res.data.message,
-              type: 'error'
-            })
-          }
-        }).catch(err=>{
-          this.$message({
-            message:'失败',
-            type: 'error'
-          })
+        const loading = this.$loading({
+          lock: true,
+          text: '请稍后...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
         })
-      }).catch(_=>{
+        deleteuser({_id: id}).then(res => {
+          loading.close()
+          this.$message({
+            type: 'success',
+            message: '删除成功'
+          })
+          this.getlist()
+        }).catch(err => {
+          console.log(err)
+          loading.close()
+        })
       })
     }
   },

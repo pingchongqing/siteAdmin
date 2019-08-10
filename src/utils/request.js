@@ -30,24 +30,23 @@ service.interceptors.response.use(
   	
  	const res=response
  	// 未登录
-  if(res.status=='200'){
+
     if(res.data.code =='user-not-login'){
       store.dispatch('LogOut')
       store.dispatch('delAllViews')
       location.href='/#/login'
       // router.push({ path: '/login' }) 
       return Promise.reject(res)
-    }else{
-      return response
+    } else if (res.data.code !== 'success') {
+      Message({
+        message: res.data.message,
+        type: 'error',
+        duration: 5 * 1000
+      })
+      return Promise.reject(res)
     }
-  }else{
-    Message({
-      message: res.data.message,
-      type: 'error',
-      duration: 5 * 1000
-    })
-    return Promise.reject(res)
-  }
+    return response
+
   // return response
     // const res = response.data
     // if (res.data.code !== '0' && res.data.code !== '200' && res.data.code !== 'success') {

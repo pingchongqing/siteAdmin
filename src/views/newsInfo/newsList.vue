@@ -5,23 +5,42 @@
       <el-row :gutter="5">
         <el-col :span="5">
           <el-form-item label="文章标题:">
-            <el-input v-model="planform.title" placeholder="文章标题"></el-input>
+            <el-input v-model="planform.title" placeholder="文章标题" size="small"></el-input>
           </el-form-item>
         </el-col>
         <el-col :span="5">
+        <el-form-item label="资讯分类">
+            <el-select
+              style="width:100%;"
+              v-model="planform.categoryId"
+              size="small"
+              filterable
+              placeholder="请选择"
+              >
+              <el-option
+                v-for="item in categorylist"
+                :key="item._id"
+                :label="item.className"
+                :value="item._id">
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="4">
           <el-form-item label="作者:">
-            <el-input v-model="planform.authorName" placeholder="请输入作者"></el-input>
+            <el-input v-model="planform.authorName" placeholder="请输入作者" size="small"></el-input>
           </el-form-item>
         </el-col>
-        <el-col :span="5">
+        <el-col :span="6">
           <el-form-item label="创建日期:">
             <el-date-picker
-              v-model="searchDate"
+              v-model="planform.createDate"
               type="datetimerange"
               :picker-options="pickerOptions"
               range-separator="-"
               start-placeholder="开始"
               end-placeholder="结束"
+              size="small"
               align="right">
             </el-date-picker>
           </el-form-item>
@@ -39,13 +58,21 @@
       :data="list"
       style="width:100%;margin-top:10px;"
       :header-cell-style="{background:'#EAEAED'}"
+      v-loading="loading"
       ref="multipleTable"
       border>
-       <el-table-column
+      <el-table-column
         fixed="left"
         label="文章标题">
         <template slot-scope="scope">
           <span>{{ scope.row.title }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        fixed="left"
+        label="文章分类">
+        <template slot-scope="scope">
+          <span>{{ scope.row.categoryId.className }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -62,19 +89,6 @@
         </div>
       </el-table-column>
       <el-table-column
-        label="是否显示">
-        <div slot-scope="scope">
-          <el-switch
-            v-model="scope.row.isShow"
-            active-color="#13ce66"
-            :active-value="0"
-            :inactive-value="1"
-            @change="changedata(scope.row.id,scope.row.isShow)"
-            >
-          </el-switch>
-        </div>
-      </el-table-column>
-      <el-table-column
         label="文章权重">
         <div slot-scope="scope">
           <span>{{scope.row.weight}}</span>
@@ -85,9 +99,8 @@
         width="180"
         label="操作">
         <div slot-scope="scope" >
-          <span @click="todetail(scope.row.id)" style="color:#409EFF;cursor:pointer;margin-right:5px;">查看</span>
-          <span @click="modifyNews(scope.row.id)" style="color:#409EFF;cursor:pointer;margin-right:5px;">编辑</span>
-          <span style="color:red;cursor:pointer;margin-right:5px;" @click="deleteitem(scope.row.id)">删除</span>
+          <span @click="modifyNews(scope.row._id)" style="color:#409EFF;cursor:pointer;margin-right:5px;">编辑</span>
+          <span style="color:red;cursor:pointer;margin-right:5px;" @click="deleteitem(scope.row._id)">删除</span>
         </div>
       </el-table-column>
     </el-table>
@@ -105,18 +118,13 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { newsInfo, deleteNewsInfo, changeNewsState } from '@/api/newsinfo'
+import { newsInfo, deleteNewsInfo, changeNewsState, newsCategoryInfo } from '@/api/newsinfo'
 import { parseTime } from '@/utils'
 export default {
   name: 'newslist',
   data() {
     return {
-      planform: {
-         title:null,//用户名
-         authorName:null,
-         createStartDate:null,
-         createEndDate:null
-      },
+      planform: {},
       list:[],
       current:1,
       pageSize: 10,
@@ -150,33 +158,40 @@ export default {
           }
         }]
       },
+      loading: false,
+      categorylist: []
     }
   },
   created() {
     this.getlist()
+    this.getcategorylist()
   },
   methods: {
     parseTime,
-    getlist() {
-      if(this.searchDate.length>0){
-        this.planform.createStartDate=this.searchDate[0]
-        this.planform.createEndDate=this.searchDate[1]
-      }
-      newsInfo({pageNum:this.current,pageSize:this.pageSize,...this.planform}).then(
+    getcategorylist(){
+      newsCategoryInfo().then(
         res => {
-          this.total=res.data.data.total
-          this.list=res.data.data.list
+          this.categorylist=res.data.data
         }
       ).catch(err => {
         console.log(err)
       })
     },
+    getlist() {
+      this.loading = true
+      newsInfo({pageNum:this.current,pageSize:this.pageSize,...this.planform}).then(
+        res => {
+          this.loading = false
+          this.total=res.data.data.total
+          this.list=res.data.data.list
+        }
+      ).catch(err => {
+        this.loading = false
+        console.log(err)
+      })
+    },
     onCancel() {
-      this.planform.title=null
-      this.planform.authorName=null
-      this.planform.createStartDate=null
-      this.planform.createEndDate=null
-      this.searchDate=[]
+      this.planform={}
       this.current=1
       this.pageSize=10
       this.getlist()
@@ -190,32 +205,10 @@ export default {
       this.current = val
       this.getlist()
     },
-    changedata(id,isShow){
-      changeNewsState({id:id,isShow:isShow}).then(res=>{
-        if(res.data.code=='success'){
-          this.$message.success({message: '操作成功'})
-          this.getlist()
-        }else{
-          this.$message.error({message: res.data.message})
-        }
-      }).catch(err=>{
-        console.log(err)
-      })
-    },
-    todetail(id){
-      this.$router.push({
-        name: 'newsdetail',
-        params:{
-          id
-        }
-      })
-    },
     modifyNews(id){
       this.$router.push({
-        name: 'modifyNews',
-        params:{
-          id
-        }
+        name: 'newNews',
+        query: {_id: id}
       })
     },
     tonew(){
@@ -231,22 +224,11 @@ export default {
         type: 'warning'
       }).then(_=>{
         deleteNewsInfo(submitId).then(res=>{
-          if(res.data.code=='success'){
-            this.$message.success({message: '删除成功'})
-            this.onSubmit()
-          }else{
-            this.$message({
-              message: res.data.message,
-              type: 'error'
-            })
-          }
+          this.$message.success({message: '删除成功'})
+          this.onSubmit()
         }).catch(err=>{
-          this.$message({
-            message:'失败',
-            type: 'error'
-          })
+          console.log(err)
         })
-      }).catch(_=>{
       })
     }
   },

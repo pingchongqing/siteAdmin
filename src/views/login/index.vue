@@ -3,7 +3,7 @@
     <div class="login-form">
       <el-form autoComplete="on" :model="loginForm" :rules="loginRules" ref="loginForm" label-position="left" label-width="0px"
         class="card-box formdetail">
-        <h3 class="title" style="font-size:16px !important;">金刚平台运营中心</h3>
+        <h3 class="title" style="font-size:16px !important;">管理后台</h3>
         <div v-if="accountSubmit">
           <el-form-item prop="username">
             <span class="svg-container svg-container_login">
@@ -83,10 +83,6 @@ export default {
               this.loading = false
             }
           }).catch(err=>{
-            this.$message({
-              message: '登录失败',
-              type: 'error'
-            })
             this.loading = false
           })
         } else {
@@ -111,7 +107,7 @@ export default {
     background:#3F73B6 url(/static/image/earthbg.png) center center no-repeat;
     // .loginform{background:url(/static/image/loginbg.png) center center no-repeat;}
     input:-webkit-autofill {
-      -webkit-box-shadow: 0 0 0px 1000px #F2F4FF inset !important;
+      box-shadow: 0 0 0px 1000px #F2F4FF inset !important;
       -webkit-text-fill-color: #889aa4 !important;
     }
     input {

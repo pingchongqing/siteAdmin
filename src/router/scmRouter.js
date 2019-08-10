@@ -47,21 +47,7 @@ export default [
       component: _import('newsInfo/newsCategory'),
       name: 'newsCategory',
       meta: { title: '资讯分类',noCache: true }
-    },
-    {
-      path: 'modifyNews/:id',
-      component: _import('newsInfo/modifyNews'),
-      name: 'modifyNews',
-      hidden: true,
-      meta: { title: '资讯修改' }
-    },
-    {
-      path: 'newsdetail/:id',
-      component: _import('newsInfo/newsdetail'),
-      name: 'newsdetail',
-      hidden: true,
-      meta: { title: '资讯详情' }
-    },
+    }
    ]
   }
 ]

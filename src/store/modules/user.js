@@ -26,20 +26,6 @@ const user = {
       // setToken(info.userType)
       setName(info.username)
     },
-    //获取服务列表
-    GetServiceList({ commit, state }) {
-      return new Promise((resolve, reject) => {
-        authservice().then(res=>{
-          if(res.data.code=='success'){
-            commit('SET_SERVICELIST', res.data.data)
-          }
-          resolve(res)
-        }).catch(err=>{
-          console.log(err)
-          reject(err)
-        })
-      })
-    },
     // 登出
     LogOut({ commit, state }) {
       commit('SET_USERINFO', '')

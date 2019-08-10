@@ -12,32 +12,49 @@ export function userlogin(data) {
 //退出
 export function authlogout() {
   return request({
-    url: '/zh/api/auth/logout',
+    url: '/api/auth/logout',
     method: 'post',
   })
 }
 
-//获取拥有的服务列表
-export function authservice() {
+// 用户列表
+export function authlist() {
   return request({
-    url: '/zh/api/auth/getCurrentService',
+    url: '/api/auth/list',
     method: 'get',
   })
 }
 
-//切换服务
-export function changenewservice(data) {
+// 新增用户
+export function adduser(data) {
   return request({
-    url: '/zh/api/auth/switchService',
-    method: 'get',
-    params: data
+    url: '/api/auth/add',
+    method: 'post',
+    data
+  })
+}
+// 删除用户
+export function deleteuser(data) {
+  return request({
+    url: '/api/auth/del',
+    method: 'post',
+    data
+  })
+}
+// 重置密码
+export function resetpassword(data) {
+  return request({
+    url: '/api/auth/resetpassword',
+    method: 'post',
+    data
   })
 }
 
 //修改密码
-export function modifypass(oldpass,newpass) {
+export function updatepassword(data) {
   return request({
-    url: '/zh/api/auth/changePwd?oldPwd='+oldpass+'&newPwd='+newpass,
+    url: '/api/auth/updatepassword',
     method: 'post',
+    data
   })
 }

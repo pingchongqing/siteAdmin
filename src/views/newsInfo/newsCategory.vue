@@ -4,36 +4,26 @@
     <el-row style="width:60%;margin-bottom:10px;">
       <el-col :span="12">
         <el-button class="companybtn" @click="addnew('new')" size="small">新增</el-button>
-      <!--   <el-button class="companybtn" @click="deleteItems" size="small">删除</el-button> -->
-      </el-col>
-      <el-col :span="12" style="text-align:right;">
-        <el-input size="small" style="width:220px;" placeholder="请输入分类名称" v-model="planform.categoryName">
-          <el-button slot="append" icon="el-icon-search" style="width:70px;" @click="current=1;getlist()"></el-button>
-        </el-input>
       </el-col>
     </el-row>
-<!--     <el-table
-      :data="list"
-      style="width:60%"
-      :header-cell-style="{background:'#F2F4FF'}"
-      @selection-change="handleSelectionChange"
-      border> -->
     <el-table
       :data="list"
       style="width:60%"
       :header-cell-style="{background:'#F2F4FF'}"
       border>
-     <!--  <el-table-column
-        type="selection"
-        width="60"
-        fixed="left"
-      > -->
       </el-table-column>
       <el-table-column
         fixed="left"
         label="分类名称">
         <template slot-scope="scope">
-          <span >{{ scope.row.categoryName }}</span>
+          <span >{{ scope.row.className }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        fixed="left"
+        label="单页栏目">
+        <template slot-scope="scope">
+          <span >{{ scope.row.singlePage ? '是' : '否' }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -42,26 +32,29 @@
         label="操作">
         <template slot-scope="scope" >
           <span style="cursor:pointer;color:#409EFF;margin-right:10px;" @click="addnew('modify',scope.row)">修改</span>
-          <span style="cursor:pointer;color:#409EFF;" @click="deleteItems(scope.row.categoryId)">删除</span>
+          <span style="cursor:pointer;color:#409EFF;" @click="deleteItems(scope.row._id)">删除</span>
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination
-      @current-change="handleCurrentPageChange"
-      :current-page="current"
-      :page-sizes="[10]"
-      :page-size="pageSize"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="total">
-    </el-pagination>
   </div>
    <!-- 新增弹窗 -->
     <el-dialog :title="dialogtitle" width="30%" :visible.sync="editdialog">
       <el-form :model="createform" ref="createForm" label-width="120px" :rules="rules">
         <el-row>
           <el-col :span="20">
-            <el-form-item label="分类名称:" prop="categoryName">
-              <el-input v-model="createform.categoryName" placeholder="请输入分类名称"></el-input>
+            <el-form-item label="分类名称:" prop="className">
+              <el-input v-model="createform.className" placeholder="请输入分类名称"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="20">
+            <el-form-item label="单页栏目:" prop="singlePage">
+              <el-switch
+                v-model="createform.singlePage"
+                active-text="是"
+                inactive-text="否">
+              </el-switch>
             </el-form-item>
           </el-col>
         </el-row>
@@ -83,19 +76,14 @@ export default {
   name: 'newsCategory',
   data() {
     return {
-      planform:{
-        categoryName:null,//分类名称
-      },
       list:[],
-      current:1,
-      pageSize: 10,
-      total:0,
       editdialog:false,
       createform:{
-        categoryName:null,
+        className:null,
+        singlePage: false
       },
       rules:{
-        categoryName:[
+        className:[
           {required:true,message:'分类名称不能为空',trigger:'blur'}
         ],
       },
@@ -114,33 +102,31 @@ export default {
     handleSelectionChange(val){
       this.deleteData=val
     },
-    deleteItems(id){
-      // if(this.deleteData.length<=0){
-      //   this.$message.error('请勾选选项')
-      //   return
-      // }
+    deleteItems(_id){
       this.$confirm('确认删除？', '提示', {
         confirmButtonText: '确认',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(_=>{
-        deleteCategoryName(id).then(res=>{
-          if(res.data.code=='success'){
-            this.$message.success('删除成功！')
-          }else{
-            this.$message.error(res.data.message)
-          }
-          this.getlist()
+        const loading = this.$loading({
+          lock: true,
+          text: '请稍后...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        })
+        deleteCategoryName({_id}).then(res=>{
+          loading.close()
+          this.$message.success('删除成功！')
+          this.getlist()          
         }).catch(err=>{
           console.log(err)
+          loading.close()
         })
-      }).catch(_=>{
       })
     },
     addnew(type,row){
       if(type==='new'){
-        this.createform.categoryName=null
-        this.createform.id=null
+        this.createform = {}
         this.dialogtitle='新增分类'
       }else if(type==='modify'){
         this.dialogtitle='修改分类'
@@ -156,19 +142,15 @@ export default {
       this.$refs['createForm'].validate(valid=>{
         if(valid){
           let api=null
-          if(this.createform.id){
+          if(this.createform._id){
             api=modifyCategoryName
           }else{
             api=createCategoryName
           }
           api(this.createform).then(res=>{
-            if(res.data.code==='success'){
-              this.$message.success('操作成功！')
-              this.closedialog()
-              this.getlist()
-            }else{
-              this.$message.error(res.data.message)
-            }
+            this.$message.success('操作成功！')
+            this.closedialog()
+            this.getlist()
           }).catch(err=>{
             console.log(err)
           })
@@ -177,54 +159,16 @@ export default {
     },
     closedialog(){
       this.$refs['createForm'].resetFields()
-      this.createform.categoryName=null
-      this.createform.id=null
+      this.createform = {}
       this.editdialog=false
     },
     getlist() {
-      newsCategoryInfo({pageSize:this.pageSize,pageNum:this.current,...this.planform}).then(
+      newsCategoryInfo().then(
         res => {
-          this.list=res.data.data.items
-          this.total=res.data.data.total
+          this.list=res.data.data
         }
       ).catch(err => {
         console.log(err)
-      })
-    },
-    deleteItem(row,index){
-      this.$confirm('确认删除？', '提示', {
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(_=>{
-          if(!row.id){
-            this.list.splice(index,1)
-            this.$message({
-              message: '删除成功',
-              type: 'success'
-            })
-          }else{
-            axios.delete('/ly/api/niotroot/eventtemplate/eventTemplate/'+row.id).then(res=>{
-              if(res.data.code=='success'){
-                this.$message({
-                  message: '删除成功',
-                  type: 'success'
-                })
-                this.getlist()
-              }else{
-                this.$message({
-                  message: res.data.message,
-                  type: 'error'
-                })
-              }
-            }).catch(err=>{
-              this.$message({
-                message: '删除失败',
-                type: 'error'
-              })
-            })
-          }
-      }).catch(_=>{
       })
     }
   },
