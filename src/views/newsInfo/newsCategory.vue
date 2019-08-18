@@ -33,12 +33,13 @@
         <template slot-scope="scope" >
           <span style="cursor:pointer;color:#409EFF;margin-right:10px;" @click="addnew('modify',scope.row)">修改</span>
           <span style="cursor:pointer;color:#409EFF;" @click="deleteItems(scope.row._id)">删除</span>
+          <span v-if="scope.row.singlePage" style="cursor:pointer;color:#409EFF;" @click="addnew('content', scope.row)">内容维护</span>
         </template>
       </el-table-column>
     </el-table>
   </div>
    <!-- 新增弹窗 -->
-    <el-dialog :title="dialogtitle" width="30%" :visible.sync="editdialog">
+    <el-dialog :title="dialogtitle" :width="editing === 'content'?'880px':'30%'" :visible.sync="editdialog">
       <el-form :model="createform" ref="createForm" label-width="120px" :rules="rules">
         <el-row>
           <el-col :span="20">
@@ -58,6 +59,14 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row v-show="editing === 'content'">
+          <el-col :span="20">
+            <el-form-item label="栏目内容:" prop="content">
+              <div id="editorElem" style="text-align:left;width:700px;margin-top:10px;"></div>
+              <el-input v-model="createform.content" v-show="false"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="closedialog">取消</el-button>
@@ -69,6 +78,7 @@
 
 <script>
 import { newsCategoryInfo, createCategoryName, modifyCategoryName, deleteCategoryName } from '@/api/newsinfo'
+import E from 'wangeditor'
 import { mapGetters } from 'vuex'
 import { parseTime } from '@/utils'
 import axios from 'axios'
@@ -89,7 +99,9 @@ export default {
       },
       dialogbtn:false,
       dialogtitle:null,
-      deleteData:null
+      deleteData:null,
+      editor: null,
+      editing: ''
     }
   },
   computed: {
@@ -97,8 +109,35 @@ export default {
   created() {
     this.getlist()
   },
+  mounted() {
+
+  },
   methods: {
     parseTime,
+    editCreater() {
+      this.editor = new E('#editorElem') //实例化
+      this.editor.customConfig = {
+        showLinkImg:false,
+        uploadImgMaxSize : 5 * 1024 * 1024 , 
+        uploadImgMaxLength : 1 , // 限制一次最多上传 1 张图片
+        uploadFileName : 'file' , //设置上传图片文件的时候，后台接受的文件名，files.myFileName;
+        withCredentials : true , //跨域上传中如果需要传递 cookie 需设置 withCredentials
+        uploadImgTimeout : 3000 , //自定义 timeout 时间，这里是设置的3秒
+        uploadImgServer : '/api/file/uploadFile' , //上传到后台的接口
+        zIndex:1
+  　　}
+      this.toListenUp(this.editor)//监听上传的各个阶段
+      this.editor.create()
+    },
+    toListenUp:function(editor){ //监听上传图片的几个阶段，和做相应的处理
+      var _this = this
+      editor.customConfig.uploadImgHooks = {
+        customInsert: function (insertImg, result, editor) {
+          var url = result.data   //获取后台返回的图片路径
+          insertImg(url) //把图片路径展示在编辑器里面
+        }
+      }
+    },
     handleSelectionChange(val){
       this.deleteData=val
     },
@@ -125,12 +164,23 @@ export default {
       })
     },
     addnew(type,row){
+      this.editing = ''
       if(type==='new'){
         this.createform = {}
         this.dialogtitle='新增分类'
       }else if(type==='modify'){
         this.dialogtitle='修改分类'
         this.createform={...row}
+      }else if(type==='content'){
+        this.dialogtitle='栏目内容'
+        this.createform={...row}        
+        this.editing = 'content'
+        this.$nextTick(() => {
+          if (!this.editor) {
+            this.editCreater()
+          }
+          this.editor.txt.html(row.content || '<p></p>')
+        })
       }
       this.editdialog=true
     },
@@ -139,6 +189,9 @@ export default {
       this.getlist()
     },
     newSubmit(){
+      if(this.editing === 'content' && this.editor.txt.html()){
+        this.createform.content = this.editor.txt.html()
+      }
       this.$refs['createForm'].validate(valid=>{
         if(valid){
           let api=null
