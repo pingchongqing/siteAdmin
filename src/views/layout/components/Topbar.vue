@@ -1,7 +1,7 @@
 <template lang="html">
   <div class="top-container">
     <div class="logo">
-      <img :src="logoPath" />
+      
     </div>
     <div class="plant-text">
       管理后台
