@@ -223,7 +223,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(_=>{
-        deleteNewsInfo(submitId).then(res=>{
+        deleteNewsInfo({ _id: submitId }).then(res=>{
           this.$message.success({message: '删除成功'})
           this.onSubmit()
         }).catch(err=>{
